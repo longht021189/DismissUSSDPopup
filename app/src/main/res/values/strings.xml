@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Dismiss USSD Popup</string>
+    <string name="accessibility_service_description">Dismiss USSD Popup</string>
 </resources>

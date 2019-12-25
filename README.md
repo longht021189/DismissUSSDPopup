@@ -1,2 +1,1 @@
-# DismissUSSDPopup
-Dismiss USSD Popup
+That's it. Once app is installed, you have to enable the service in Accessibility Settings (Setting->Accessibility Setting -> YourAppName).

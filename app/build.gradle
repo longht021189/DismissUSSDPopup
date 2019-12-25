@@ -14,6 +14,8 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "APP_CENTER_KEY", "\"cc5ec81a-4db4-45a8-8cdf-0073fc878f69\""
     }
 
     buildTypes {
@@ -22,17 +24,19 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
     buildFeatures {
         compose true
     }
-
 }
 
 dependencies {
@@ -44,6 +48,9 @@ dependencies {
     implementation 'androidx.ui:ui-layout:0.1.0-dev03'
     implementation 'androidx.ui:ui-material:0.1.0-dev03'
     implementation 'androidx.ui:ui-tooling:0.1.0-dev03'
+    implementation "com.microsoft.appcenter:appcenter-analytics:2.5.1"
+    implementation "com.microsoft.appcenter:appcenter-crashes:2.5.1"
+    implementation 'com.google.code.gson:gson:2.8.6'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'

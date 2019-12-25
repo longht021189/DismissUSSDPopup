@@ -5,7 +5,15 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.text.TextUtils
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import com.google.gson.Gson
+import com.microsoft.appcenter.analytics.Analytics
+import com.microsoft.appcenter.crashes.Crashes
+import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog
+import java.lang.RuntimeException
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class USSDService : AccessibilityService() {
 
@@ -48,12 +56,40 @@ class USSDService : AccessibilityService() {
             else { Collections.singletonList(source?.text ?: "") }
 
         val text = processUSSDText(eventText)
-
         if (TextUtils.isEmpty(text)) return
 
-        Log.e("Long", "[USSDService][onAccessibilityEvent] ${eventText.joinToString()}")
+        Crashes.trackError(RuntimeException(),
+                mapOf(
+                    "eventType" to eventType.toString(),
+                    "eventClassName" to event?.className.toString(),
+                    "eventText" to event?.text.toString(),
+                    "sourceText" to source?.text.toString(),
+                    "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
+                    "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString(),
+                    "data" to Gson().toJson(parse(source))),
+                listOf())
 
         performGlobalAction(GLOBAL_ACTION_BACK)
+    }
+
+    private fun parse(source: AccessibilityNodeInfo?): Map<String, Any> {
+        val result = HashMap<String, Any>()
+
+        val childCount = source?.childCount ?: 0
+        for (i in 0 until childCount) {
+            val child = source!!.getChild(i)
+            val key = "$i - ${child.text}"
+            val actionList = child.actionList
+
+            actionList.forEach {
+                val key2 = "$key - ${it.id}"
+                result[key2] = it.label.toString()
+            }
+
+            result[key] = parse(child)
+        }
+
+        return result
     }
 
     private fun processUSSDText(eventText: List<CharSequence>): String? {
