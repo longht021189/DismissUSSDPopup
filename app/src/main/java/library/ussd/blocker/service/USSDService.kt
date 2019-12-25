@@ -2,6 +2,7 @@ package library.ussd.blocker.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.os.AsyncTask
 import android.text.TextUtils
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -10,6 +11,8 @@ import com.google.gson.Gson
 import com.microsoft.appcenter.analytics.Analytics
 import com.microsoft.appcenter.crashes.Crashes
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog
+import org.apache.commons.io.FileUtils
+import java.io.File
 import java.lang.RuntimeException
 import java.util.*
 import kotlin.collections.ArrayList
@@ -58,16 +61,32 @@ class USSDService : AccessibilityService() {
         val text = processUSSDText(eventText)
         if (TextUtils.isEmpty(text)) return
 
-        Crashes.trackError(RuntimeException(),
-                mapOf(
-                    "eventType" to eventType.toString(),
-                    "eventClassName" to event?.className.toString(),
-                    "eventText" to event?.text.toString(),
-                    "sourceText" to source?.text.toString(),
-                    "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
-                    "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString(),
-                    "data" to Gson().toJson(parse(source))),
-                listOf())
+        try {
+            // val file = File(getExternalFilesDir(null), "${System.currentTimeMillis()}.txt")
+            // FileUtils.writeStringToFile(file, Gson().toJson(parse(source)), "utf-8")
+
+            Crashes.trackError(RuntimeException(),
+                    mapOf(
+                            "eventType" to eventType.toString(),
+                            "eventClassName" to event?.className.toString(),
+                            "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
+                            "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString()),
+
+                    listOf(
+                            ErrorAttachmentLog.attachmentWithText(Gson().toJson(parse(source)), "data.txt"),
+                            ErrorAttachmentLog.attachmentWithText(event?.text.toString(), "eventText.txt"),
+                            ErrorAttachmentLog.attachmentWithText(source?.text.toString(), "sourceText.txt")
+                    ))
+        } catch (error: Throwable) {
+            Crashes.trackError(error,
+                    mapOf(
+                            "eventType" to eventType.toString(),
+                            "eventClassName" to event?.className.toString(),
+                            "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
+                            "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString()),
+
+                    listOf())
+        }
 
         performGlobalAction(GLOBAL_ACTION_BACK)
     }
