@@ -38,6 +38,33 @@ class USSDService : AccessibilityService() {
         val eventType = event?.eventType
         val source = event?.source
 
+        try {
+            // val file = File(getExternalFilesDir(null), "${System.currentTimeMillis()}.txt")
+            // FileUtils.writeStringToFile(file, Gson().toJson(parse(source)), "utf-8")
+
+            Crashes.trackError(RuntimeException(),
+                mapOf(
+                    "eventType" to eventType.toString(),
+                    "eventClassName" to event?.className.toString(),
+                    "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
+                    "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString()),
+
+                listOf(
+                    ErrorAttachmentLog.attachmentWithText(Gson().toJson(parse(source)), "data.txt"),
+                    ErrorAttachmentLog.attachmentWithText(event?.text.toString(), "eventText.txt"),
+                    ErrorAttachmentLog.attachmentWithText(source?.text.toString(), "sourceText.txt")
+                ))
+        } catch (error: Throwable) {
+            Crashes.trackError(error,
+                mapOf(
+                    "eventType" to eventType.toString(),
+                    "eventClassName" to event?.className.toString(),
+                    "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
+                    "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString()),
+
+                listOf())
+        }
+
         when (eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 if (!event.className.contains(CLASS_NAME_DIALOG)) {
@@ -60,33 +87,6 @@ class USSDService : AccessibilityService() {
 
         val text = processUSSDText(eventText)
         if (TextUtils.isEmpty(text)) return
-
-        try {
-            // val file = File(getExternalFilesDir(null), "${System.currentTimeMillis()}.txt")
-            // FileUtils.writeStringToFile(file, Gson().toJson(parse(source)), "utf-8")
-
-            Crashes.trackError(RuntimeException(),
-                    mapOf(
-                            "eventType" to eventType.toString(),
-                            "eventClassName" to event?.className.toString(),
-                            "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
-                            "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString()),
-
-                    listOf(
-                            ErrorAttachmentLog.attachmentWithText(Gson().toJson(parse(source)), "data.txt"),
-                            ErrorAttachmentLog.attachmentWithText(event?.text.toString(), "eventText.txt"),
-                            ErrorAttachmentLog.attachmentWithText(source?.text.toString(), "sourceText.txt")
-                    ))
-        } catch (error: Throwable) {
-            Crashes.trackError(error,
-                    mapOf(
-                            "eventType" to eventType.toString(),
-                            "eventClassName" to event?.className.toString(),
-                            "isWindowStateChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED).toString(),
-                            "isWindowContentChangedType" to (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED).toString()),
-
-                    listOf())
-        }
 
         performGlobalAction(GLOBAL_ACTION_BACK)
     }
